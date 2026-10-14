@@ -13,6 +13,7 @@ window.weddingConfig = {
   address: "Malegaon Road, Taroda Bk., Nanded, Maharashtra 431605",
   city: "Nanded",
   mapUrl: "https://maps.app.goo.gl/GaHqGkoQtA6vr6RM8?g_st=ac", // Optional: paste a Google Maps URL. Leave blank to generate a search from the address.
+  instagramHandle: "https://www.instagram.com/tthebetterhalves", // Your shared couple-account username only, without the @. The nav link appears when this is filled in.
 
   images: {
     // Temporary couple photo from Unsplash. Replace with "assets/images/hero.jpg" to use your own local image.

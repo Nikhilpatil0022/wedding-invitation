@@ -18,6 +18,7 @@ Open `js/config.js` and update:
 - `shortDate` and `longDate`
 - `time`, `venue`, `address`, and `city`
 - `mapUrl` (optional; if left blank, a Google Maps search is generated from `address`)
+- `instagramHandle` (your shared couple-account username only, without `@`; once filled, a link to that account appears in the navigation on desktop and mobile)
 
 For example, a local photo path can be `assets/images/hero.jpg`. Put your photo in `assets/images/` and change the related `images` value in `js/config.js`.
 

@@ -20,12 +20,18 @@
 
   <header class="topbar" aria-label="Main navigation">
     <a class="wordmark" href="#home" aria-label="Back to the beginning"><span class="wordmark-symbol">♡</span><span>OUR STORY</span></a>
-    <nav class="topnav">
+    <nav class="topnav" aria-label="Page sections">
       <a href="#our-story">Our story</a>
       <a href="#our-chapter">The next chapter</a>
       <a href="#invitation">The invitation</a>
     </nav>
-    <a class="topbar-date" href="#invitation"><span class="tiny-dot"></span><span data-bind="shortDate">Your Wedding Date</span></a>
+    <div class="topbar-meta">
+      <a class="topbar-instagram" id="instagramLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Visit our shared Instagram account" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle class="instagram-flash" cx="17.5" cy="6.5" r="1"/></svg>
+        <span id="instagramHandleLabel">Instagram</span>
+      </a>
+      <a class="topbar-date" href="#invitation"><span class="tiny-dot"></span><span data-bind="shortDate">Your Wedding Date</span></a>
+    </div>
   </header>
 
   <main id="main">

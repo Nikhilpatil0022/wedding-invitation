@@ -30,6 +30,24 @@
     }
   });
 
+  // Show one Instagram link for the shared couple account (never individual accounts).
+  const instagramLink = document.getElementById("instagramLink");
+  const instagramHandleLabel = document.getElementById("instagramHandleLabel");
+  const instagramHandle = String(config.instagramHandle || "")
+    .trim()
+    .replace(/^@+/, "");
+  if (instagramLink && instagramHandle) {
+    instagramLink.href = instagramHandle;
+    instagramLink.hidden = false;
+    instagramLink.setAttribute(
+      "aria-label",
+      `Visit our shared Instagram account @${instagramHandle}`,
+    );
+    if (instagramHandleLabel)
+      instagramHandleLabel.textContent = `@${instagramHandle}`;
+    document.body.classList.add("has-instagram");
+  }
+
   // Google Maps link remains politely disabled until a real venue address has been entered.
   const mapLink = document.getElementById("mapLink");
   const mapLinkLabel = document.getElementById("mapLinkLabel");
