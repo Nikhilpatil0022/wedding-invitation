@@ -75,6 +75,24 @@
   let seekFrame = 0;
   let scrollProgress = 0;
 
+  // This is a scroll-scrubbed film, not an autoplay video. Some mobile browsers
+  // can resume muted inline media unexpectedly, so explicitly lock it to paused
+  // playback and let scroll-driven currentTime seeks choose the displayed frame.
+  if (video) {
+    video.autoplay = false;
+    video.removeAttribute("autoplay");
+    video.defaultMuted = true;
+    video.muted = true;
+    video.pause();
+
+    const keepVideoPaused = () => {
+      if (!video.paused) video.pause();
+    };
+    video.addEventListener("play", keepVideoPaused);
+    video.addEventListener("playing", keepVideoPaused);
+    document.addEventListener("visibilitychange", keepVideoPaused);
+  }
+
   function paintProgress(value) {
     if (progress)
       progress.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
@@ -90,9 +108,12 @@
     if (seekFrame) return;
     seekFrame = window.requestAnimationFrame(() => {
       seekFrame = 0;
+      // Never allow natural playback; only the scroll position may advance frames.
+      if (!video.paused) video.pause();
       if (videoReady && Math.abs(video.currentTime - targetTime) > 0.035) {
         try {
           video.currentTime = targetTime;
+          video.pause();
         } catch (_) {
           /* Wait for the browser to make the frame seekable. */
         }
@@ -236,6 +257,7 @@
           );
           scrollProgress = Math.max(0, Math.min(1, -rect.top / range));
           paintProgress(scrollProgress);
+          seekVideo(scrollProgress);
         },
         { passive: true },
       );

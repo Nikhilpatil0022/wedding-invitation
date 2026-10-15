@@ -51,3 +51,7 @@ The initial couple photographs are loaded from Unsplash and can be replaced at a
 - Our-next-chapter image: [Couple sharing a tender moment on a wedding day](https://unsplash.com/photos/couple-sharing-a-tender-moment-on-a-wedding-day-vtTT7THRmA8) by Céline Druguet.
 
 These are temporary demonstration images, not photographs of the couple receiving this invitation.
+
+### Mobile video playback behavior
+
+The wedding film is intentionally **not autoplayed**. The video element uses `preload="metadata"`; JavaScript explicitly keeps it paused and seeks to the frame mapped to the visitor's scroll position. If mobile Safari/Chrome attempts to start natural playback, a playback event immediately pauses it. Scrolling remains responsible for moving the video forward and backward.
