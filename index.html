@@ -30,7 +30,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle class="instagram-flash" cx="17.5" cy="6.5" r="1"/></svg>
         <span id="instagramHandleLabel">Instagram</span>
       </a>
-    <a class="topbar-date" href="#invitation"><span class="tiny-dot"></span><span data-bind="shortDate">Your Wedding Date</span></a>
+      <a class="topbar-date" href="#invitation"><span class="tiny-dot"></span><span data-bind="shortDate">Your Wedding Date</span></a>
     </div>
   </header>
 
@@ -57,9 +57,11 @@
     <!-- 02 / LOVE STORY: Put your landscape MP4 at assets/videos/love-story.mp4. -->
     <section class="film-section" id="our-story" aria-labelledby="film-title">
       <div class="film-stage">
-        <img class="film-poster" data-image="videoPoster" loading="lazy">
-        <video class="story-video" id="storyVideo" muted playsinline preload="metadata" aria-label="Wedding film controlled by scrolling">
-          <source src="assets/videos/love-story.mp4" type="video/mp4">
+        <img class="film-poster" data-image="videoPoster" alt="Temporary image used while the wedding film is not installed" loading="lazy">
+        <img class="film-mobile-photo" data-image="mobileStory" alt="Romantic couple photograph shown on mobile" loading="lazy" decoding="async">
+        <video class="story-video" id="storyVideo" muted playsinline preload="none" aria-label="Wedding film controlled by scrolling">
+          <!-- JavaScript loads the MP4 only on desktop-sized screens. -->
+          <source data-src="assets/videos/love-story.mp4" type="video/mp4">
         </video>
         <div class="film-overlay"></div>
         <div class="film-content">
@@ -67,6 +69,7 @@
           <h2 id="film-title">Life feels different<br><em>when it is shared.</em></h2>
           <p class="film-copy">Love is found in the quiet understanding, the laughter that feels like home, and the simple choice to stand beside each other through every season.</p>
           <p class="film-copy film-copy-last">It turns ordinary moments into precious memories — and reminds us that life's greatest happiness is having someone with whom to share it all.</p>
+          <div class="film-note" id="videoNote" role="status" aria-live="polite"><span class="film-note-dot"></span><span id="videoNoteText">Preparing the film…</span></div>
         </div>
         <div class="film-footer"><span>OUR STORY, FRAME BY FRAME</span><span class="film-progress" aria-hidden="true"><i id="filmProgress"></i></span><span>SCROLL ↕</span></div>
       </div>
@@ -135,10 +138,10 @@
         <p>Your presence will make our celebration even more special.</p>
         <p class="closing-names">With love, <span data-bind="partnerOne">Your Name</span> & <span data-bind="partnerTwo">Partner's Name</span></p>
       </div>
-      <p class="invitation-footer">FOREVER STARTS HERE</p>
+      <p class="invitation-footer">MADE WITH LOVE · FOREVER STARTS HERE</p>
     </section>
   </main>
 
-  <footer class="site-footer"><a href="#home">↑ Back to the beginning</a></footer>
+  <footer class="site-footer"><a href="#home">↑ Back to the beginning</a><span>Made for a love that lasts.</span></footer>
 </body>
 </html>

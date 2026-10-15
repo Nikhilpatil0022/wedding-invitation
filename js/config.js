@@ -24,6 +24,7 @@ window.weddingConfig = {
     //   "https://images.unsplash.com/photo-1548210612-9968def675bb?auto=format&fit=crop&w=2000&q=85",
     videoPoster: "assets/videos/love-story.mp4",
     // A second temporary couple photo for the next-chapter section.
+    mobileStory: "assets/images/mobileStory.jpeg",
     // chapter: "https://images.unsplash.com/photo-1747221722650-3dc08fe87c38?auto=format&fit=crop&w=1800&q=85"
     chapter: "assets/images/chapter.jpeg",
   },

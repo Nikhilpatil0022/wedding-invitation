@@ -54,8 +54,9 @@ a { color: inherit; }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 .film-section { position: relative; z-index: 1; background: #282725; }
 .film-stage { position: relative; height: 100svh; min-height: 650px; display: grid; place-items: center; isolation: isolate; overflow: hidden; color: #fffaf4; background: #332e2a; }
-.film-poster, .story-video, .film-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+.film-poster, .film-mobile-photo, .story-video, .film-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
 .film-poster { z-index: -3; object-fit: cover; object-position: center 48%; transform: scale(1.02); }
+.film-mobile-photo { display: none; z-index: -3; object-fit: cover; object-position: center 42%; }
 .story-video { z-index: -2; opacity: 0; object-fit: cover; object-position: center; transition: opacity .6s ease; }
 .film-stage.is-video-ready .story-video { opacity: 1; }
 .film-overlay { z-index: -1; background: linear-gradient(90deg, rgba(21,19,18,.38), rgba(21,19,18,.56) 45%, rgba(21,19,18,.39)), linear-gradient(0deg, rgba(21,18,17,.44), transparent 60%, rgba(21,18,17,.22)); }
@@ -186,6 +187,32 @@ a { color: inherit; }
   .invitation-footer { font-size: .46rem; letter-spacing: .15em; line-height: 1.8; }
   .site-footer { flex-direction: column; justify-content: center; gap: .35rem; padding-top: 1.1rem; padding-bottom: 1.1rem; text-align: center; }
 }
+
+/* Mobile experience: show one still photograph instead of the scroll-scrubbed video.
+   This also avoids downloading/decoding the MP4 on phones and narrow tablets. */
+@media (max-width: 767px) {
+  .film-stage {
+    height: auto;
+    min-height: 100svh;
+    padding: 2.3rem 0 2.1rem;
+  }
+  .film-poster { display: none; }
+  .film-mobile-photo {
+    display: block;
+    object-position: center 42%;
+    transform: none;
+  }
+  .story-video { display: none !important; }
+  .film-overlay {
+    background: linear-gradient(0deg, rgba(21,18,17,.76), rgba(21,18,17,.42) 56%, rgba(21,18,17,.36));
+  }
+  .film-content {
+    align-self: center;
+    padding: 2.9rem 0 3rem;
+  }
+  .film-note, .film-footer { display: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .scroll-cue svg { animation: none; }

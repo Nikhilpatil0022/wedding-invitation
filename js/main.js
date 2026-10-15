@@ -70,52 +70,78 @@
   const stage = document.querySelector(".film-stage");
   const progress = document.getElementById("filmProgress");
   const videoNote = document.getElementById("videoNote");
+  const videoNoteText = document.getElementById("videoNoteText");
+  const videoSource = video ? video.querySelector("source[data-src]") : null;
+  const desktopVideoMedia = window.matchMedia("(min-width: 768px)");
+  let videoLoader = null;
+  let videoLoadStarted = false;
+  let metadataReady = false;
+  let frameReady = false;
   let videoReady = false;
   let targetTime = 0;
   let seekFrame = 0;
   let scrollProgress = 0;
-
-  // This is a scroll-scrubbed film, not an autoplay video. Some mobile browsers
-  // can resume muted inline media unexpectedly, so explicitly lock it to paused
-  // playback and let scroll-driven currentTime seeks choose the displayed frame.
-  if (video) {
-    video.autoplay = false;
-    video.removeAttribute("autoplay");
-    video.defaultMuted = true;
-    video.muted = true;
-    video.pause();
-
-    const keepVideoPaused = () => {
-      if (!video.paused) video.pause();
-    };
-    video.addEventListener("play", keepVideoPaused);
-    video.addEventListener("playing", keepVideoPaused);
-    document.addEventListener("visibilitychange", keepVideoPaused);
-  }
 
   function paintProgress(value) {
     if (progress)
       progress.style.width = `${Math.max(0, Math.min(1, value)) * 100}%`;
   }
 
+  function updateVideoNote(message, visible = true) {
+    if (videoNoteText && message) videoNoteText.textContent = message;
+    if (videoNote) videoNote.hidden = !visible;
+  }
+
+  // Start loading before the film section enters the viewport, giving the browser time
+  // to fetch metadata and decode the first frame while the visitor reads the hero.
+  function startVideoLoad() {
+    // Mobile uses a still image; never download or decode the MP4 there.
+    if (
+      !desktopVideoMedia.matches ||
+      !video ||
+      !videoSource ||
+      videoLoadStarted
+    )
+      return;
+    const sourceUrl = videoSource.dataset.src;
+    if (!sourceUrl) return;
+
+    videoLoadStarted = true;
+    video.preload = "auto";
+    videoSource.src = sourceUrl;
+    updateVideoNote("Preparing the film…", true);
+    video.load();
+  }
+
+  function revealVideoWhenReady() {
+    if (!stage || !videoReady) return;
+    stage.classList.add("is-video-ready");
+    updateVideoNote("", false);
+  }
+
   function seekVideo(value) {
-    if (!videoReady || !Number.isFinite(video.duration) || video.duration <= 0)
+    if (
+      !video ||
+      !metadataReady ||
+      !Number.isFinite(video.duration) ||
+      video.duration <= 0
+    )
       return;
     targetTime = Math.max(
       0,
       Math.min(video.duration - 0.04, value * video.duration),
     );
-    if (seekFrame) return;
+    if (!frameReady || seekFrame) return;
+
     seekFrame = window.requestAnimationFrame(() => {
       seekFrame = 0;
-      // Never allow natural playback; only the scroll position may advance frames.
-      if (!video.paused) video.pause();
-      if (videoReady && Math.abs(video.currentTime - targetTime) > 0.035) {
+      if (!videoReady || video.seeking) return;
+      if (Math.abs(video.currentTime - targetTime) > 0.035) {
         try {
           video.currentTime = targetTime;
-          video.pause();
         } catch (_) {
-          /* Wait for the browser to make the frame seekable. */
+          // The browser may not have enough data for this frame yet. The next seek/scroll
+          // update will retry using the latest target time.
         }
       }
     });
@@ -123,28 +149,97 @@
 
   if (video && stage) {
     video.addEventListener("loadedmetadata", () => {
-      videoReady = Number.isFinite(video.duration) && video.duration > 0;
-      if (videoReady) {
-        stage.classList.add("is-video-ready");
-        if (videoNote) videoNote.hidden = true;
-        seekVideo(scrollProgress);
+      metadataReady = Number.isFinite(video.duration) && video.duration > 0;
+      if (metadataReady) {
         if (window.ScrollTrigger) window.ScrollTrigger.refresh();
-      }
-    });
-    video.addEventListener("canplay", () => {
-      if (video.videoWidth > 0) {
-        videoReady = true;
-        stage.classList.add("is-video-ready");
-        if (videoNote) videoNote.hidden = true;
         seekVideo(scrollProgress);
       }
     });
-    video.addEventListener("error", () => {
-      // Expected until assets/videos/love-story.mp4 is added; keep the still-image fallback visible.
-      videoReady = false;
-      stage.classList.remove("is-video-ready");
-      if (videoNote) videoNote.hidden = false;
+
+    // loadeddata means at least the first video frame is decoded; do not reveal a black
+    // rectangle just because metadata arrived before the pixels did.
+    video.addEventListener("loadeddata", () => {
+      frameReady = video.videoWidth > 0;
+      videoReady = frameReady && metadataReady;
+      revealVideoWhenReady();
+      seekVideo(scrollProgress);
     });
+
+    video.addEventListener("canplay", () => {
+      frameReady = video.videoWidth > 0;
+      videoReady = frameReady && metadataReady;
+      revealVideoWhenReady();
+      seekVideo(scrollProgress);
+    });
+
+    // If scrolling changes the target while the browser is decoding a seek, apply the
+    // most recent target after the current seek completes instead of queuing many seeks.
+    video.addEventListener("seeked", () => {
+      if (videoReady && Math.abs(video.currentTime - targetTime) > 0.06) {
+        seekVideo(scrollProgress);
+      }
+    });
+
+    video.addEventListener("error", () => {
+      videoReady = false;
+      frameReady = false;
+      stage.classList.remove("is-video-ready");
+      updateVideoNote(
+        "Video unavailable. Check that assets/videos/love-story.mp4 exists and is optimized for web playback.",
+        true,
+      );
+    });
+
+    function observeVideoLoad() {
+      if (!desktopVideoMedia.matches || videoLoadStarted || !stage) return;
+      if (videoLoader) videoLoader.disconnect();
+      if ("IntersectionObserver" in window) {
+        videoLoader = new IntersectionObserver(
+          (entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+              startVideoLoad();
+              if (videoLoader) videoLoader.disconnect();
+            }
+          },
+          { rootMargin: `${Math.round(window.innerHeight * 1.8)}px 0px` },
+        );
+        videoLoader.observe(stage);
+      } else {
+        // Older desktop browsers: start immediately, since there is no reliable near-viewport signal.
+        startVideoLoad();
+      }
+    }
+
+    function updateVideoMode() {
+      if (desktopVideoMedia.matches) {
+        observeVideoLoad();
+        updateVideoNote("Preparing the film…", !videoReady);
+        return;
+      }
+
+      // Phones and narrow tablets use only the separate still image. If a user resizes
+      // from desktop, remove the MP4 source and release the media resource as well.
+      if (videoLoader) videoLoader.disconnect();
+      video.pause();
+      stage.classList.remove("is-video-ready");
+      videoReady = false;
+      frameReady = false;
+      metadataReady = false;
+      videoLoadStarted = false;
+      if (videoSource && videoSource.hasAttribute("src")) {
+        videoSource.removeAttribute("src");
+        video.load();
+      }
+      updateVideoNote("", false);
+      paintProgress(0);
+    }
+
+    if (desktopVideoMedia.addEventListener) {
+      desktopVideoMedia.addEventListener("change", updateVideoMode);
+    } else {
+      desktopVideoMedia.addListener(updateVideoMode);
+    }
+    updateVideoMode();
   }
 
   // GSAP is progressive enhancement: the static page remains usable if the CDN is unavailable.
@@ -217,26 +312,30 @@
       },
     );
 
-    // Pin the video frame while scroll position scrubs through the movie in either direction.
-    window.ScrollTrigger.create({
-      trigger: ".film-section",
-      start: "top top",
-      end: () => `+=${Math.round(window.innerHeight * 1.55)}`,
-      pin: ".film-stage",
-      pinSpacing: true,
-      scrub: true,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate(self) {
-        scrollProgress = self.progress;
-        paintProgress(scrollProgress);
-        seekVideo(scrollProgress);
-      },
-      onRefresh(self) {
-        scrollProgress = self.progress;
-        paintProgress(scrollProgress);
-        seekVideo(scrollProgress);
-      },
+    // Preserve the cinematic scroll-scrubbed implementation on desktop only.
+    // GSAP matchMedia automatically reverts the pin when the viewport becomes mobile-sized.
+    const desktopFilmMatch = window.gsap.matchMedia();
+    desktopFilmMatch.add("(min-width: 768px)", () => {
+      window.ScrollTrigger.create({
+        trigger: ".film-section",
+        start: "top top",
+        end: () => `+=${Math.round(window.innerHeight * 1.55)}`,
+        pin: ".film-stage",
+        pinSpacing: true,
+        scrub: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate(self) {
+          scrollProgress = self.progress;
+          paintProgress(scrollProgress);
+          seekVideo(scrollProgress);
+        },
+        onRefresh(self) {
+          scrollProgress = self.progress;
+          paintProgress(scrollProgress);
+          seekVideo(scrollProgress);
+        },
+      });
     });
   }
 
@@ -250,6 +349,7 @@
       window.addEventListener(
         "scroll",
         () => {
+          if (!desktopVideoMedia.matches) return;
           const rect = filmSection.getBoundingClientRect();
           const range = Math.max(
             1,
@@ -257,7 +357,6 @@
           );
           scrollProgress = Math.max(0, Math.min(1, -rect.top / range));
           paintProgress(scrollProgress);
-          seekVideo(scrollProgress);
         },
         { passive: true },
       );
